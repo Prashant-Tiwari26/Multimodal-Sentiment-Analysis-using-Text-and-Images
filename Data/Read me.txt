@@ -1,0 +1,12 @@
+This Twitter Dataset (MVSA with Sentiment Label Enrichment) is Based on Our Paper Titled "The Enrichment Of MVSA Twitter Data Via Caption-Generated Label Using Sentiment Analysis". 
+
+If the datasets are useful for your research, please cite our work [1] and the work [2].
+
+*The Eriched MVSA dataset*:
+
+[1] D. J. Mohammed and H. J. Aleqabie, "The Enrichment Of MVSA Twitter Data Via Caption-Generated Label Using Sentiment Analysis," 2022 Iraqi International Conference on Communication and Information Technologies (IICCIT), Basrah, Iraq, 2022, pp. 322-327, doi: 10.1109/IICCIT55816.2022.10010435.
+
+
+*The Original Dataset (Which We Developed on)*:
+
+[2] T. Niu, S. A. Zhu, L. Pang and A. El Saddik, Sentiment Analysis on Multi-view Social Data, MultiMedia Modeling (MMM), pp: 15-27, Miami, 2016.
