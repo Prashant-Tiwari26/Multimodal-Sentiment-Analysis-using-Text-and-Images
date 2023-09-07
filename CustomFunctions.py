@@ -1409,7 +1409,7 @@ class Train_Classifiers:
 
 
 
-def tfidf_preprocessing(x, y, encoder=None, remove_stopwords:bool =True, test_size:float = 0.2, stratify=False):
+def tfidf_preprocessing(x, y, encoder=None, remove_stopwords:bool =True, test_size:float = 0.2, stratify=False, shuffle:bool=True):
     """
     Preprocesses the input data using TF-IDF vectorization.
 
@@ -1443,15 +1443,18 @@ def tfidf_preprocessing(x, y, encoder=None, remove_stopwords:bool =True, test_si
     
     if remove_stopwords == True:
         stop_words = set(stopwords.words('english'))
-        for i in range(len(x)):
-            tokens = word_tokenize(x[i])
-            filtered = [word for word in tokens if word not in stop_words]
-            x[i] = ' '.join(filtered)
-    
+        for i, a in enumerate(x):
+            try:
+                tokens = word_tokenize(a)
+                filtered = [word for word in tokens if word not in stop_words]
+                x[i] = ' '.join(filtered)
+            except TypeError:
+                continue
+
     if stratify==True:
-        x_train, x_test, y_train, y_test = train_test_split(x,y,test_size=test_size, shuffle=True, stratify=y)
+        x_train, x_test, y_train, y_test = train_test_split(x,y,test_size=test_size, shuffle=shuffle, stratify=y)
     else:        
-        x_train, x_test, y_train, y_test = train_test_split(x,y,test_size=test_size, shuffle=True)
+        x_train, x_test, y_train, y_test = train_test_split(x,y,test_size=test_size, shuffle=shuffle)
 
     vectorizer = TfidfVectorizer(tokenizer=LemmTokenizer(), sublinear_tf=True)
     x_train = vectorizer.fit_transform(x_train)
@@ -1491,16 +1494,16 @@ class BERT_Embeddings:
         get_all_data(): Returns all data, encoded data, and hidden states.
 
     """
-    def __init__(self, data:pd.core.frame.DataFrame, target_column:str,test_size:float = 0.2, model:str = 'distilbert-base-uncased', stratify:bool=True) -> None:
+    def __init__(self, data:pd.core.frame.DataFrame, target_column:str,test_size:float = 0.2, model:str = 'distilbert-base-uncased', stratify:bool=True, shuffle:bool=True) -> None:
         self.data = dt.from_pandas(data)
         self.target_column = target_column
         if "__index_level_0__" in self.data.column_names:
           self.data.remove_columns(["__index_level_0__"])
 
         if stratify == True:
-          self.data = self.data.train_test_split(test_size=test_size, shuffle=True, stratify_by_column=self.target_column)
+          self.data = self.data.train_test_split(test_size=test_size, shuffle=shuffle, stratify_by_column=self.target_column)
         else:
-          self.data = self.data.train_test_split(test_size=test_size, shuffle=True)
+          self.data = self.data.train_test_split(test_size=test_size, shuffle=shuffle)
 
         if "distil" in model:
             self.model = transformers.DistilBertModel.from_pretrained(model)
