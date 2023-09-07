@@ -23,6 +23,20 @@ The following dataset has been used for this project : [Mohammed, D. J., & Aleqa
 
 ## Preprocessing
 
+### Text
+
+The captions are corresponding labels are available in LabeledText.xlsx, feature engineering has been done to add the following feature columns:<br>
+
+- Caption Length : _Indicating length of captions_
+- Hashtags : _Extracting and collecting all the hashtags used in each tweet_
+- Total Hashtags : _Showing the total number of hashtags in each tweets_
+
+> The code to do this is available to run in `Scripts/Text/FeatureEng.py`, the engineered data is then saved as a csv file to `Data/Text/Engineered.csv`<br>
+
+Afterwards, the embeddings are generated for captions and hashtags using TF-IDF approach and BERT.<br>
+
+> The code to do this is in `Scripts/Text/Preprocess.py`, the function `tfidf_preprocessing()` and class `BERT_Embeddings` is present in `CustomFunctions.py` and then the embeddings are saved in `Data/Text/TF-IDF` and `Data/Text/BERT` along with target labels and number of captions.
+
 ## Training
 
 ## Evaluation
