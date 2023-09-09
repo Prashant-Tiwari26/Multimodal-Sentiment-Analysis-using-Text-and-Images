@@ -32,6 +32,7 @@ from timeit import default_timer as Timer
 from nltk.corpus import stopwords, wordnet
 import torchvision.transforms as transforms
 from torchvision.datasets import ImageFolder
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
@@ -39,7 +40,7 @@ from sklearn.naive_bayes import MultinomialNB, GaussianNB
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.utils.class_weight import compute_sample_weight
 from torch.utils.data import DataLoader, random_split, Dataset
-from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.model_selection import GridSearchCV, train_test_split, cross_validate
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier, HistGradientBoostingClassifier
 
 def get_audio(video_path, directory_path):
@@ -1578,3 +1579,40 @@ class BERT_Embeddings:
             tuple: A tuple containing datatable Frames representing the data, encoded data, and hidden states.
         """
         return self.data, self.encoded_data, self.hidden_states
+    
+def CrossValidateClassifiers(models: dict, x, y, cv: int = 5, scoring: str = 'accuracy', return_performance: bool = False):
+    """
+    Cross-validate multiple classifiers and evaluate their performance.
+
+    Args:
+        models (dict): A dictionary containing classifier names as keys and classifier objects as values.
+        x (array-like): Input features for classification.
+        y (array-like): Target labels.
+        cv (int, optional): Number of cross-validation folds. Default is 5.
+        scoring (str, optional): Scoring metric for evaluation. Default is 'accuracy'.
+        return_performance (bool, optional): If True, returns a dictionary of performance metrics for each classifier. Default is False.
+
+    Returns:
+        dict or None: A dictionary of performance metrics for each classifier if return_performance is True, else None.
+
+    Note:
+        This function performs cross-validation for each classifier in the provided models dictionary,
+        and it prints the test scores, mean test score, and time taken for each classifier.
+
+    Example:
+        models = {'Random Forest': RandomForestClassifier(), 'Logistic Regression': LogisticRegression()}
+        x_train, y_train = load_data()
+        CrossValidateClassifiers(models, x_train, y_train, cv=10, scoring='f1', return_performance=True)
+    """
+    model_performance = {}
+    for key, model in models.items():
+        start = Timer()
+        try:
+            model_performance[key] = cross_validate(model, x, y, scoring=scoring, cv=cv, n_jobs=3)
+        except ValueError:
+            model_performance[key] = cross_validate(model, MinMaxScaler().fit_transform(x), y, scoring=scoring, cv=cv, n_jobs=3)
+        end = Timer()
+        print("For {}\nTest Scores = {}\nMean Test Score = {}\nTime taken = {} seconds\n".format(key, model_performance[key]['test_score'], model_performance[key]['test_score'].mean(), round(end-start, 3)))
+
+    if return_performance:
+        return model_performance
