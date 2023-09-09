@@ -20,11 +20,10 @@ from scipy.io import wavfile
 import librosa.display as ld
 from nltk.tag import pos_tag
 from sklearn.metrics import *
-from sklearn.ensemble import *
 import matplotlib.pyplot as plt
 from xgboost import XGBClassifier
+from datasets import Dataset as dt
 from lightgbm import LGBMClassifier
-from torch.utils.data import Dataset
 from catboost import CatBoostClassifier
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
@@ -34,15 +33,14 @@ from nltk.corpus import stopwords, wordnet
 import torchvision.transforms as transforms
 from torchvision.datasets import ImageFolder
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.model_selection import GridSearchCV
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
-from torch.utils.data import DataLoader, random_split
 from sklearn.naive_bayes import MultinomialNB, GaussianNB
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.utils.class_weight import compute_sample_weight
-from datasets import Dataset as dt
+from torch.utils.data import DataLoader, random_split, Dataset
+from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier, HistGradientBoostingClassifier
 
 def get_audio(video_path, directory_path):
     """
@@ -1102,10 +1100,10 @@ class Train_Classifiers:
         for key, model in self.models.items():
             print(f"Training {key}")
             start = Timer()
-            if (isinstance(model, (sklearn.naive_bayes.MultinomialNB, sklearn.naive_bayes.GaussianNB, sklearn.ensemble._hist_gradient_boosting.gradient_boosting.HistGradientBoostingClassifier)) and isinstance(self.x_train, scipy.sparse._csr.csr_matrix)):
-                model.fit(self.x_train.toarray(), self.y_train)
-            else:
+            try:
                 model.fit(self.x_train, self.y_train)
+            except TypeError:
+                model.fit(self.x_train.toarray(), self.y_train)
             end = Timer()
             print(f"{key} Model Trained\nTime taken = {round(end-start, 3)} seconds\n------------------")
             self.trained_models[key]= model
@@ -1116,11 +1114,11 @@ class Train_Classifiers:
         """
         self.predicts = {}
         for key, model in self.trained_models.items():
-            if (isinstance(model, (sklearn.naive_bayes.MultinomialNB, sklearn.naive_bayes.GaussianNB, sklearn.ensemble._hist_gradient_boosting.gradient_boosting.HistGradientBoostingClassifier)) and isinstance(self.x_test, scipy.sparse._csr.csr_matrix)):
-                self.predicts[key] = model.predict(self.x_test.toarray())
-                print(f"{key}: {accuracy_score(self.y_test, self.predicts[key])}")
-            else:
+            try:
                 self.predicts[key] = model.predict(self.x_test)
+                print(f"{key}: {accuracy_score(self.y_test, self.predicts[key])}")
+            except TypeError:
+                self.predicts[key] = model.predict(self.x_test.toarray())
                 print(f"{key}: {accuracy_score(self.y_test, self.predicts[key])}")
 
     def get_trained_models(self):
@@ -1250,9 +1248,12 @@ class Train_Classifiers:
                 try:
                     self.probabilites[key] = value.predict_proba(self.x_test)
                     roc.append(round(roc_auc_score(self.y_test, self.probabilites[key], multi_class='ovr'), 3))
-                except AttributeError:
+                except AttributeError:      # forgot to set probability = True while creating SVC model
                     self.probabilites[key] = None
                     roc.append(None)
+                except TypeError:           # passed scipy sparse array into models requiring dense data
+                    self.probabilites[key] = value.predict_proba(self.x_test.toarray())
+                    roc.append(round(roc_auc_score(self.y_test, self.probabilites[key], multi_class='ovr'), 3))
             else:
                 try:
                     self.probabilites[key] = value.predict_proba(self.x_test)[:,1]
@@ -1260,6 +1261,9 @@ class Train_Classifiers:
                 except AttributeError:
                     self.probabilites[key] = None
                     roc.append(None)
+                except TypeError:
+                    self.probabilites[key] = value.predict_proba(self.x_test.toarray())[:,1]
+                    roc.append(round(roc_auc_score(self.y_test, self.probabilites[key]), 3))
 
             for i in range(num_categories):
                 f1[i].append(round(f[i], 3))
