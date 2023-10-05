@@ -41,19 +41,22 @@ def get_embedding(image_path):
 embeddings_list = []
 
 # Iterate through all the records and generate their embeddings and adding it to the list
-for index, row in df.iterrows():
-    image_name = row['File Name']
-    label_name=row['LABEL']
-    image_name=image_name.replace(".txt",".jpg")
-    folder_path = "/content/drive/MyDrive/Images/"
-   
-    image_path=folder_path+label_name+'/'+image_name
-   
-   
-    embedding=get_embedding(image_path)
-    embeddings_list.append(embedding)
+def generateImageEmbeddings():
+    for index, row in df.iterrows():
+        image_name = row['File Name']
+        label_name=row['LABEL']
+        image_name=image_name.replace(".txt",".jpg")
+        folder_path = "/content/drive/MyDrive/Images/"
+    
+        image_path=folder_path+label_name+'/'+image_name
+    
+    
+        embedding=get_embedding(image_path)
+        embeddings_list.append(embedding)
 
-# Saving our numpy array containing all 4869 embeddings of size (1,1664)
-image_embeddings=np.array(embeddings_list)
+    # Saving our numpy array containing all 4869 embeddings of size (1,1664)
+    image_embeddings=np.array(embeddings_list)
 
-np.save("/content/densenet.npy",image_embeddings)
+    np.save("/content/densenet.npy",image_embeddings)
+if __name__ == '__main__':
+    generateImageEmbeddings()
