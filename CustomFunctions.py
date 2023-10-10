@@ -309,6 +309,54 @@ class CustomDataset_FolderLabels:
         """
         return self.test_loader
     
+class CustomDataset_FolderLabelsV2:
+    """
+    A custom dataset class for loading image data organized in folders with labels.
+
+    Args:
+        data_path (str): The root directory path containing subdirectories with images.
+        batch_size (int, optional): Batch size for the DataLoader. Default is 32.
+        transform (callable, optional): A torchvision.transforms.Compose object for image preprocessing. 
+            Default is to resize images to (224, 224), convert them to tensors, and normalize with mean 
+            (0.5, 0.5, 0.5) and standard deviation (0.5, 0.5, 0.5).
+        shuffle (bool, optional): Whether to shuffle the data during each epoch. Default is True.
+
+    Attributes:
+        data_path (str): The path to the root directory containing the dataset.
+        batch_size (int): The batch size used for DataLoader.
+        transform (callable): The data preprocessing transform applied to each image.
+        dataset (torchvision.datasets.ImageFolder): The ImageFolder dataset created from the specified path.
+        dataloader (torch.utils.data.DataLoader): The DataLoader for iterating over the dataset.
+
+    Methods:
+        get_dataset(): Returns the ImageFolder dataset.
+        get_dataloader(): Returns the DataLoader for the dataset.
+
+    Example:
+        dataset = CustomDataset_FolderLabelsV2(data_path='dataset_path', batch_size=64)
+        dataloader = dataset.get_dataloader()
+        for batch in dataloader:
+            # Your training loop here.
+    """
+    def __init__(self, data_path:str, batch_size:int=32, transform=None, shuffle:bool=True):
+        self.data_path = data_path
+        self.batch_size = batch_size
+        if transform == None:
+            self.transform = transforms.Compose([
+                transforms.Resize((224, 224)),
+                transforms.ToTensor(),
+                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+            ])
+        else:
+            self.transform = transform
+        self.dataset = ImageFolder(root=self.data_path, transform=self.transform)
+        self.dataloader = DataLoader(self.dataset, batch_size=self.batch_size, shuffle=shuffle)
+
+    def get_dataset(self):
+        return self.dataset
+    
+    def get_dataloader(self):
+        return self.dataloader
 
 def balanced_log_loss(y_true, y_pred, x_test):
     """
