@@ -19,7 +19,7 @@ def EngineerFeatures():
     data['Total Hashtags'] = data['Hashtags'].str.split(' ').apply(lambda x: len(x) if x[0] != '' else 0)
     data['Hashtags'].replace('', np.nan, inplace=True)
 
-    # data.to_csv("Data/Text/Engineered.csv", index=False)
+    data.to_csv("Data/Text/Engineered.csv", index=False)
 
     negative_images = os.listdir("Data/Images/Negative")
     neutral_images = os.listdir("Data/Images/Neutral")
@@ -39,7 +39,9 @@ def EngineerFeatures():
     data['File Name'] = data['File Name'].str.replace('.txt', '.jpg')
     data['File Name'] = data.apply(update_filename, axis=1)
 
-    data.to_csv("Data/Text/Engineered2.csv", index=False)
+    data.drop(['Caption', 'Caption Length', 'Hashtags', 'Total Hashtags'], axis=1, inplace=True)
+
+    data.to_csv("Data/Images/ImageLabelsSequenced.csv", index=False)
 
 if __name__ == '__main__':
     EngineerFeatures()
