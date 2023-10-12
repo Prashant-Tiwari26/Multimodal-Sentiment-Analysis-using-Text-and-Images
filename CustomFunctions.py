@@ -931,10 +931,9 @@ models = {
   'Gaussian Naive Bayes': GaussianNB(),
   'SVC': SVC(),
   'AdaBoost': AdaBoostClassifier(),
-  'Gradient Boosting': GradientBoostingClassifier(),
   'Random Forest': RandomForestClassifier(),
   'XGBoost': XGBClassifier(),
-  'CatBoost': CatBoostClassifier(),
+  'CatBoost': CatBoostClassifier(task_type='GPU'),
   'LightGBM': LGBMClassifier()
 }
 
@@ -998,6 +997,9 @@ class Train_Classifiers:
                 model.fit(self.x_train, self.y_train)
             except TypeError:
                 model.fit(self.x_train.toarray(), self.y_train)
+            except ValueError:
+                print("Model Skipped\n------------------")
+                continue
             end = Timer()
             print(f"{key} Model Trained\nTime taken = {round(end-start, 3)} seconds\n------------------")
             self.trained_models[key]= model
