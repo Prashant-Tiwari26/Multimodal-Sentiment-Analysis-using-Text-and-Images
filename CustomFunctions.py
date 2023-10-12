@@ -41,6 +41,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.utils.class_weight import compute_sample_weight
 from torch.utils.data import DataLoader, random_split, Dataset
 from sklearn.model_selection import GridSearchCV, train_test_split, cross_validate
+from torchvision.transforms import Compose, Resize, InterpolationMode, ToTensor, CenterCrop, Normalize
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier, HistGradientBoostingClassifier
 
 def performance(model, x_test, y_test):
@@ -113,7 +114,6 @@ class CustomDataset_CSVlabels(Dataset):
     def __init__(self,csv_file, img_dir, transform=None) -> None:
         super().__init__()
         self.img_labels = pd.read_csv(csv_file)
-        self.img_labels.drop(['Unnamed: 0'], axis=1, inplace=True)
         self.img_dir = img_dir
         self.transform = transform
 
@@ -1509,3 +1509,10 @@ def CrossValidateClassifiers(models: dict, x, y, cv: int = 5, scoring: str = 'ac
 
     if return_performance:
         return model_performance
+
+EfficientNet_transform = Compose([
+    ToTensor(),
+    Resize((384,384), interpolation=InterpolationMode.BICUBIC),
+    CenterCrop((384,384)),
+    Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+])
