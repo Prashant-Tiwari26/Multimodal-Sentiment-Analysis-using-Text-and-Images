@@ -4,7 +4,7 @@ from scipy.sparse import vstack, save_npz
 
 import sys
 sys.path.append("C:\College\Projects\Multimodal Sentiment Analysis using Text and Images")
-from CustomFunctions import BERT_Embeddings, tfidf_preprocessing
+from Utils.nlp import BERT_Embeddings, tfidf_preprocessing
 
 def GenerateEmbeddings():
     data = pd.read_csv("Data/Text/Engineered.csv")
