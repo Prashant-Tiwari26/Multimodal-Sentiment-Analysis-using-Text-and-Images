@@ -5,7 +5,7 @@ from torchvision.models.efficientnet import efficientnet_v2_s, EfficientNet_V2_S
 
 import sys
 sys.path.append("C:\College\Projects\Multimodal Sentiment Analysis using Text and Images")
-from CustomFunctions import CustomDataset_CSVlabels, EfficientNet_transform
+from Utils.CustomFunctions import CustomDataset_CSVlabels, EfficientNet_transform
 
 def GenerateEmbeddings():
     model = efficientnet_v2_s(weights=EfficientNet_V2_S_Weights.IMAGENET1K_V1)

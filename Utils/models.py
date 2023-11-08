@@ -1,5 +1,6 @@
 import torch
 import torchtext
+from torchvision.models.efficientnet import efficientnet_b1, EfficientNet_B1_Weights
 
 class LSTMmodel(torch.nn.Module):
     def __init__(self, n_layers:int, embed_dim:int, hidden_dim:int, embedding:str="twitter.27B", bidirectionality:bool=False, freeze:bool=False) -> None:
