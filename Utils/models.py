@@ -41,16 +41,19 @@ class MultimodalModel(torch.nn.Module):
         else:
             self.linear_layers.append(torch.nn.Linear(1280+hidden_dim, neurons[0]))
         self.linear_layers.append(torch.nn.SELU())
+        self.linear_layers.append(torch.nn.Dropout(0.3))
         for i in range(1, len(neurons)):
             self.linear_layers.append(torch.nn.Linear(neurons[i-1], neurons[i]))
+            self.linear_layers.append(torch.nn.BatchNorm1d(neurons[i]))
             self.linear_layers.append(torch.nn.SELU())
         self.linear_layers.append(torch.nn.Dropout(0.3))
         self.linear_layers.append(torch.nn.Linear(neurons[-1], 3))
 
     def forward(self, text, image):
         image_embeddings = self.CNN(image)
-        text_embeddings = self.LSTM(text)
-        multimodal = torch.concat([image_embeddings, text_embeddings], dim=1).view(1,1,-1)
+        text_output, _ = self.LSTM(text)  
+        text_embeddings = text_output[:, -1, :]
+        multimodal = torch.cat([image_embeddings, text_embeddings], dim=1)
         for layer in self.linear_layers:
             multimodal = layer(multimodal)
         return torch.nn.functional.log_softmax(multimodal, dim=1)
