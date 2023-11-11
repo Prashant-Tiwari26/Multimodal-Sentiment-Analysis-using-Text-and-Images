@@ -57,3 +57,32 @@ class MultimodalModel(torch.nn.Module):
         for layer in self.linear_layers:
             multimodal = layer(multimodal)
         return torch.nn.functional.log_softmax(multimodal, dim=1)
+    
+class MultimodalImageStatic(torch.nn.Module):
+    def __init__(self, n_layers:int, linear_neurons:list, image_dim:int, embed_dim:int, hidden_dim:int=256, embedding:str="twitter.27B", bidirectionality:bool=False, freeze:bool=False):
+        glove_embeddings = torchtext.vocab.GloVe(embedding, embed_dim)
+        self.LSTM = torch.nn.Sequential(
+            torch.nn.Embedding.from_pretrained(glove_embeddings.vectors, freeze=freeze),
+            torch.nn.LSTM(embed_dim, hidden_dim, n_layers, batch_first=True, bidirectional=bidirectionality),
+        )
+        self.linear_layers = torch.nn.ModuleList()
+        if bidirectionality == True:
+            self.linear_layers.append(torch.nn.Linear(image_dim+(2*hidden_dim), linear_neurons[0]))
+        else:
+            self.linear_layers.append(torch.nn.Linear(image_dim+hidden_dim, linear_neurons[0]))
+        self.linear_layers.append(torch.nn.SELU())
+        self.linear_layers.append(torch.nn.Dropout(0.3))
+        for i in range(1, len(linear_neurons)):
+            self.linear_layers.append(torch.nn.Linear(linear_neurons[i-1], linear_neurons[i]))
+            self.linear_layers.append(torch.nn.BatchNorm1d(linear_neurons[i]))
+            self.linear_layers.append(torch.nn.SELU())
+        self.linear_layers.append(torch.nn.Dropout(0.3))
+        self.linear_layers.append(torch.nn.Linear(linear_neurons[-1], 3))
+
+    def forward(self, text, image_embeddings):
+        text_output, _ = self.LSTM(text)  
+        text_embeddings = text_output[:, -1, :]
+        multimodal = torch.cat([image_embeddings, text_embeddings], dim=1)
+        for layer in self.linear_layers:
+            multimodal = layer(multimodal)
+        return torch.nn.functional.log_softmax(multimodal, dim=1)

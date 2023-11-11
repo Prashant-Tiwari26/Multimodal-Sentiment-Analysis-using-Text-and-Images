@@ -324,3 +324,83 @@ def TrainLoopMultimodal(
     plt.xticks(np.arange(len(total_train_loss)))
 
     plt.show()
+
+def TrainLoopCompact(
+    model,
+    optimizer:torch.optim.Optimizer,
+    criterion:torch.nn.Module,
+    train_dataloader:torch.utils.data.DataLoader,
+    val_dataloader:torch.utils.data.DataLoader,
+    scheduler:torch.optim.lr_scheduler.ReduceLROnPlateau,
+    num_epochs:int=20,
+    early_stopping_rounds:int=5,
+    return_best_model:bool=True,
+    device:str='cpu'
+):
+    model.to(device)
+    best_val_loss = float('inf')
+    epochs_without_improvement = 0
+    best_model_weights = model.state_dict()
+
+    for epoch in tqdm(range(num_epochs)):
+        model.train()
+        print("\nEpoch {}\n----------".format(epoch))
+        train_loss = 0
+        for i, (images, texts, labels) in enumerate(train_dataloader):
+            images = images.to(device)
+            texts = texts.to(device)
+            labels = labels.to(device, dtype=torch.long)
+            optimizer.zero_grad()
+            outputs = model(texts, images)
+            loss = criterion(outputs, labels)
+            train_loss += loss
+            loss.backward()
+            optimizer.step()
+            print("Loss for batch {} = {}".format(i, loss))
+
+        print("\nTraining Loss for epoch {} = {}\n".format(epoch, train_loss))
+
+        model.eval()
+        validation_loss = 0
+        with torch.inference_mode():
+            for (images, texts, labels) in val_dataloader:
+                images = images.to(device)
+                texts = texts.to(device)
+                labels = labels.to(device, dtype=torch.long)
+                outputs = model(texts, images)
+                loss = criterion(outputs, labels)
+                validation_loss += loss
+
+            if validation_loss < best_val_loss:
+                best_val_loss = validation_loss
+                epochs_without_improvement = 0
+                best_model_weights = model.state_dict()
+            else:
+                epochs_without_improvement += 1
+
+            print(f"Current Validation Loss = {validation_loss}")
+            print(f"Best Validation Loss = {best_val_loss}")
+            print(f"Epochs without Improvement = {epochs_without_improvement}")
+        scheduler.step(validation_loss)
+        if epochs_without_improvement == early_stopping_rounds:
+            break
+
+    if return_best_model == True:
+        model.load_state_dict(best_model_weights)
+
+class MultimodalDatasetStatic(Dataset):
+    def __init__(self, tokens, image_embeddings:np.array, labels, words_to_index:dict):
+        self.tokens = tokens
+        self.image_embeddings = image_embeddings
+        self.labels = labels
+        self.words_to_index = words_to_index
+
+    def __len__(self):
+        return len(self.labels)
+    
+    def __getitem__(self, index):
+        image_embeddings = self.image_embeddings[index]
+        label = self.labels[index]
+        text_embedding = torch.LongTensor([self.words_to_index.get(word, 0) for word in self.tokens[index]])
+
+        return (image_embeddings, text_embedding, label)
