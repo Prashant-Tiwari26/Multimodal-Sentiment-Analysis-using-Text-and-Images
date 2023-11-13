@@ -1,3 +1,5 @@
 /.venv/
 Notebooks/.vector_cache/
 __pycache__/
+.vector_cache/
+glove.twitter.27B/
