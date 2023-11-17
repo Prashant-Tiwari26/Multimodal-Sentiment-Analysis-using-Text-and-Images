@@ -717,7 +717,7 @@ def BestParam_search(models:dict, x, y, num_cores:int = 3):
     else:
       continue
 
-def train_MLmodels(models:dict, X_train, y_train):
+def train_MLmodels(models:dict, x_train, y_train):
     """
     Train multiple ML models.
 
@@ -734,14 +734,18 @@ def train_MLmodels(models:dict, X_train, y_train):
     The list of trained models is returned as the output.
     """
     trained_models = {}
-
-    for key,model in models.items():
+    for key, model in models.items():
         print(f"Training {key}")
-        if (isinstance(model, (sklearn.naive_bayes.MultinomialNB, sklearn.naive_bayes.GaussianNB, sklearn.ensemble._hist_gradient_boosting.gradient_boosting.HistGradientBoostingClassifier)) and isinstance(X_train, scipy.sparse._csr.csr_matrix)):
-           model.fit(X_train.toarray(), y_train)
-        else:
-          model.fit(X_train, y_train)
-        print(f"{key} Model Trained\n------------------")
+        start = Timer()
+        try:
+            model.fit(x_train, y_train)
+        except TypeError:
+            model.fit(x_train.toarray(), y_train)
+        except ValueError:
+            print("Model Skipped\n------------------")
+            continue
+        end = Timer()
+        print(f"{key} Model Trained\nTime taken = {round(end-start, 3)} seconds\n------------------")
         trained_models[key]= model
     return trained_models
 

@@ -9,7 +9,7 @@ from torch.utils.data import Dataset
 from sklearn.metrics import accuracy_score
 from torchvision.transforms import Compose, ToTensor, InterpolationMode, CenterCrop, Normalize, Resize
 
-class CustomTextClassificationDataset(Dataset):
+class TextDataset(Dataset):
     def __init__(self, tokens, labels, word_to_index:dict):
         self.tokens = tokens
         self.labels = labels
@@ -63,6 +63,7 @@ def TrainLoopText(
     criterion:torch.nn.Module,
     train_dataloader:torch.utils.data.DataLoader,
     val_dataloader:torch.utils.data.DataLoader,
+    scheduler:torch.optim.lr_scheduler.ReduceLROnPlateau,
     num_epochs:int=20,
     early_stopping_rounds:int=5,
     return_best_model:bool=True,
@@ -148,11 +149,12 @@ def TrainLoopText(
 
             print(f"Train Accuracy: {train_accuracy * 100:.2f}%")
             print(f"Validation Accuracy: {val_accuracy * 100:.2f}%")
-
+        
+        total_val_loss.append(validation_loss/len(val_dataloader.dataset))
+        scheduler.step(validation_loss)
+        
         if epochs_without_improvement == early_stopping_rounds:
             break
-
-        total_val_loss.append(validation_loss/len(val_dataloader.dataset))
 
     if return_best_model == True:
         model.load_state_dict(best_model_weights)
